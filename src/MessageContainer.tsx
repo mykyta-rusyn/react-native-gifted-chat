@@ -20,7 +20,6 @@ import { LoadEarlier, LoadEarlierProps } from './LoadEarlier'
 import Message from './Message'
 import Color from './Color'
 import { User, IMessage, Reply } from './Models'
-import TypingIndicator from './TypingIndicator'
 
 import { StylePropType } from './utils'
 import { warning } from './logging'
@@ -148,21 +147,6 @@ export default class MessageContainer<
   state = {
     showScrollBottom: false,
     hasScrolled: false,
-  }
-
-  renderTypingIndicator = () => {
-    if (Platform.OS === 'web') {
-      return null
-    }
-    return <TypingIndicator isTyping={this.props.isTyping || false} />
-  }
-
-  renderFooter = () => {
-    if (this.props.renderFooter) {
-      return this.props.renderFooter(this.props)
-    }
-
-    return this.renderTypingIndicator()
   }
 
   renderLoadEarlier = () => {
@@ -357,10 +341,10 @@ export default class MessageContainer<
           {...this.props.invertibleScrollViewProps}
           ListEmptyComponent={this.renderChatEmpty}
           ListFooterComponent={
-            inverted ? this.renderHeaderWrapper : this.renderFooter
+            inverted ? this.renderHeaderWrapper : undefined
           }
           ListHeaderComponent={
-            inverted ? this.renderFooter : this.renderHeaderWrapper
+            inverted ? undefined : this.renderHeaderWrapper
           }
           onScroll={this.handleOnScroll}
           scrollEventThrottle={100}

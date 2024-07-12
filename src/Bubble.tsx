@@ -116,8 +116,8 @@ export interface BubbleProps<TMessage extends IMessage> {
   quickReplyStyle?: StyleProp<ViewStyle>
   quickReplyTextStyle?: StyleProp<TextStyle>
   quickReplyContainerStyle?: StyleProp<ViewStyle>
-  onPress?(context?: any, message?: any): void
-  onLongPress?(context?: any, message?: any): void
+  onPress?(message?: any): void
+  onLongPress?(message?: any): void
   onQuickReply?(replies: Reply[]): void
   renderMessageText?(props: RenderMessageTextProps<TMessage>): React.ReactNode
   renderCustomView?(bubbleProps: BubbleProps<TMessage>): React.ReactNode
@@ -212,9 +212,7 @@ export default class Bubble<
   }
 
   onPress = () => {
-    if (this.props.onPress) {
-      this.props.onPress(this.context, this.props.currentMessage)
-    }
+    this.props.onPress?.(this.props.currentMessage)
   }
 
   onLongPress = () => {
