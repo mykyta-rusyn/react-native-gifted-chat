@@ -7,8 +7,8 @@ export const MIN_COMPOSER_HEIGHT = Platform.select({
 })
 export const MAX_COMPOSER_HEIGHT = 200
 export const DEFAULT_PLACEHOLDER = 'Type a message...'
-export const DATE_FORMAT = 'll'
-export const TIME_FORMAT = 'LT'
+export const DATE_FORMAT = 'MMM ll, uuuu'
+export const TIME_FORMAT = 'H:mm'
 
 export const TEST_ID = {
   WRAPPER: 'GC_WRAPPER',

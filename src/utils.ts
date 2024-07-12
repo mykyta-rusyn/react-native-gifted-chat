@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
-import dayjs from 'dayjs'
 
 import { IMessage } from './Models'
+import { isValid, isSameDay as isSameDayImpl } from 'date-fns'
 
 export const StylePropType = PropTypes.oneOfType([
   PropTypes.array,
@@ -18,14 +18,10 @@ export function isSameDay(
     return false
   }
 
-  const currentCreatedAt = dayjs(currentMessage.createdAt)
-  const diffCreatedAt = dayjs(diffMessage.createdAt)
-
-  if (!currentCreatedAt.isValid() || !diffCreatedAt.isValid()) {
+  if (!isValid(currentMessage.createdAt) || !isValid(diffMessage.createdAt)) {
     return false
   }
-
-  return currentCreatedAt.isSame(diffCreatedAt, 'day')
+  return isSameDayImpl(currentMessage.createdAt, diffMessage.createdAt)
 }
 
 export function isSameUser(

@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {
   Text,
-  Clipboard,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -11,25 +10,13 @@ import {
   TextStyle,
 } from 'react-native'
 
-import { GiftedChatContext } from './GiftedChatContext'
 import { QuickReplies, QuickRepliesProps } from './QuickReplies'
 import { MessageText, MessageTextProps } from './MessageText'
-import { MessageImage, MessageImageProps } from './MessageImage'
-import { MessageVideo } from './MessageVideo'
-import { MessageAudio } from './MessageAudio'
 import { Time, TimeProps } from './Time'
 
 import Color from './Color'
 import { StylePropType, isSameUser, isSameDay } from './utils'
-import {
-  User,
-  IMessage,
-  LeftRightStyle,
-  Reply,
-  Omit,
-  MessageVideoProps,
-  MessageAudioProps,
-} from './Models'
+import { User, IMessage, LeftRightStyle, Reply, Omit } from './Models'
 
 const styles = {
   left: StyleSheet.create({
@@ -102,26 +89,6 @@ const styles = {
   }),
 }
 
-const DEFAULT_OPTION_TITLES = ['Copy Text', 'Cancel']
-
-export type RenderMessageImageProps<TMessage extends IMessage> = Omit<
-  BubbleProps<TMessage>,
-  'containerStyle' | 'wrapperStyle'
-> &
-  MessageImageProps<TMessage>
-
-export type RenderMessageVideoProps<TMessage extends IMessage> = Omit<
-  BubbleProps<TMessage>,
-  'containerStyle' | 'wrapperStyle'
-> &
-  MessageVideoProps<TMessage>
-
-export type RenderMessageAudioProps<TMessage extends IMessage> = Omit<
-  BubbleProps<TMessage>,
-  'containerStyle' | 'wrapperStyle'
-> &
-  MessageAudioProps<TMessage>
-
 export type RenderMessageTextProps<TMessage extends IMessage> = Omit<
   BubbleProps<TMessage>,
   'containerStyle' | 'wrapperStyle'
@@ -138,7 +105,6 @@ export interface BubbleProps<TMessage extends IMessage> {
   currentMessage?: TMessage
   nextMessage?: TMessage
   previousMessage?: TMessage
-  optionTitles?: string[]
   containerStyle?: LeftRightStyle<ViewStyle>
   wrapperStyle?: LeftRightStyle<ViewStyle>
   textStyle?: LeftRightStyle<TextStyle>
@@ -153,9 +119,6 @@ export interface BubbleProps<TMessage extends IMessage> {
   onPress?(context?: any, message?: any): void
   onLongPress?(context?: any, message?: any): void
   onQuickReply?(replies: Reply[]): void
-  renderMessageImage?(props: RenderMessageImageProps<TMessage>): React.ReactNode
-  renderMessageVideo?(props: RenderMessageVideoProps<TMessage>): React.ReactNode
-  renderMessageAudio?(props: RenderMessageAudioProps<TMessage>): React.ReactNode
   renderMessageText?(props: RenderMessageTextProps<TMessage>): React.ReactNode
   renderCustomView?(bubbleProps: BubbleProps<TMessage>): React.ReactNode
   renderTime?(timeProps: TimeProps<TMessage>): React.ReactNode
@@ -165,13 +128,13 @@ export interface BubbleProps<TMessage extends IMessage> {
   renderQuickReplies?(
     quickReplies: QuickRepliesProps<TMessage>,
   ): React.ReactNode
+  onPhonePress?(phone: string): void
+  onEmailPress?(email: string): void
 }
 
 export default class Bubble<
   TMessage extends IMessage = IMessage
 > extends React.Component<BubbleProps<TMessage>> {
-  static contextType = GiftedChatContext
-
   static defaultProps = {
     touchableProps: {},
     onPress: null,
@@ -187,7 +150,6 @@ export default class Bubble<
     renderQuickReplies: null,
     onQuickReply: null,
     position: 'left',
-    optionTitles: DEFAULT_OPTION_TITLES,
     currentMessage: {
       text: null,
       createdAt: null,
@@ -256,32 +218,7 @@ export default class Bubble<
   }
 
   onLongPress = () => {
-    const { currentMessage } = this.props
-    if (this.props.onLongPress) {
-      this.props.onLongPress(this.context, this.props.currentMessage)
-    } else if (currentMessage && currentMessage.text) {
-      const { optionTitles } = this.props
-      const options =
-        optionTitles && optionTitles.length > 0
-          ? optionTitles.slice(0, 2)
-          : DEFAULT_OPTION_TITLES
-      const cancelButtonIndex = options.length - 1
-      this.context.actionSheet().showActionSheetWithOptions(
-        {
-          options,
-          cancelButtonIndex,
-        },
-        (buttonIndex: number) => {
-          switch (buttonIndex) {
-            case 0:
-              Clipboard.setString(currentMessage.text)
-              break
-            default:
-              break
-          }
-        },
-      )
-    }
+    this.props.onLongPress?.(this.props.currentMessage)
   }
 
   styledBubbleToNext() {
@@ -360,49 +297,11 @@ export default class Bubble<
 
   renderMessageText() {
     if (this.props.currentMessage && this.props.currentMessage.text) {
-      const {
-        containerStyle,
-        wrapperStyle,
-        optionTitles,
-        ...messageTextProps
-      } = this.props
+      const { containerStyle, wrapperStyle, ...messageTextProps } = this.props
       if (this.props.renderMessageText) {
         return this.props.renderMessageText(messageTextProps)
       }
       return <MessageText {...messageTextProps} />
-    }
-    return null
-  }
-
-  renderMessageImage() {
-    if (this.props.currentMessage && this.props.currentMessage.image) {
-      const { containerStyle, wrapperStyle, ...messageImageProps } = this.props
-      if (this.props.renderMessageImage) {
-        return this.props.renderMessageImage(messageImageProps)
-      }
-      return <MessageImage {...messageImageProps} />
-    }
-    return null
-  }
-
-  renderMessageVideo() {
-    if (this.props.currentMessage && this.props.currentMessage.video) {
-      const { containerStyle, wrapperStyle, ...messageVideoProps } = this.props
-      if (this.props.renderMessageVideo) {
-        return this.props.renderMessageVideo(messageVideoProps)
-      }
-      return <MessageVideo {...messageVideoProps} />
-    }
-    return null
-  }
-
-  renderMessageAudio() {
-    if (this.props.currentMessage && this.props.currentMessage.audio) {
-      const { containerStyle, wrapperStyle, ...messageAudioProps } = this.props
-      if (this.props.renderMessageAudio) {
-        return this.props.renderMessageAudio(messageAudioProps)
-      }
-      return <MessageAudio {...messageAudioProps} />
     }
     return null
   }
@@ -491,18 +390,12 @@ export default class Bubble<
   renderBubbleContent() {
     return this.props.isCustomViewBottom ? (
       <View>
-        {this.renderMessageImage()}
-        {this.renderMessageVideo()}
-        {this.renderMessageAudio()}
         {this.renderMessageText()}
         {this.renderCustomView()}
       </View>
     ) : (
       <View>
         {this.renderCustomView()}
-        {this.renderMessageImage()}
-        {this.renderMessageVideo()}
-        {this.renderMessageAudio()}
         {this.renderMessageText()}
       </View>
     )

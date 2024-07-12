@@ -7,13 +7,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  ListViewProps,
   ListRenderItemInfo,
   NativeSyntheticEvent,
   NativeScrollEvent,
   StyleProp,
   ViewStyle,
   Platform,
+  FlatListProps,
 } from 'react-native'
 
 import { LoadEarlier, LoadEarlierProps } from './LoadEarlier'
@@ -70,7 +70,7 @@ export interface MessageContainerProps<TMessage extends IMessage> {
   messages?: TMessage[]
   isTyping?: boolean
   user?: User
-  listViewProps: Partial<ListViewProps>
+  listViewProps: Partial<FlatListProps<TMessage>>
   inverted?: boolean
   loadEarlier?: boolean
   alignTop?: boolean
@@ -89,6 +89,8 @@ export interface MessageContainerProps<TMessage extends IMessage> {
   onQuickReply?(replies: Reply[]): void
   infiniteScroll?: boolean
   isLoadingEarlier?: boolean
+  onPhonePress?(phone: string): void
+  onEmailPress?(email: string): void
 }
 
 interface State {

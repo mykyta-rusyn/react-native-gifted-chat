@@ -1,12 +1,5 @@
-import {
-  ActionSheetOptions,
-  ActionSheetProvider,
-  ActionSheetProviderRef,
-} from '@expo/react-native-action-sheet'
-import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import PropTypes from 'prop-types'
-import React, { createRef, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createRef, useEffect, useRef, useState } from 'react'
 import {
   Animated,
   FlatList,
@@ -20,37 +13,24 @@ import {
   View,
   ViewStyle,
 } from 'react-native'
-import { LightboxProps } from 'react-native-lightbox-v2'
 import uuid from 'uuid'
-import { Actions, ActionsProps } from './Actions'
 import { Avatar, AvatarProps } from './Avatar'
 import Bubble from './Bubble'
 import { Composer, ComposerProps } from './Composer'
 import { MAX_COMPOSER_HEIGHT, MIN_COMPOSER_HEIGHT, TEST_ID } from './Constant'
 import { Day, DayProps } from './Day'
 import GiftedAvatar from './GiftedAvatar'
-import { GiftedChatContext } from './GiftedChatContext'
 import { InputToolbar, InputToolbarProps } from './InputToolbar'
 import { LoadEarlier, LoadEarlierProps } from './LoadEarlier'
 import Message from './Message'
 import MessageContainer from './MessageContainer'
-import { MessageImage, MessageImageProps } from './MessageImage'
 import { MessageText, MessageTextProps } from './MessageText'
-import {
-  IMessage,
-  LeftRightStyle,
-  MessageAudioProps,
-  MessageVideoProps,
-  Reply,
-  User,
-} from './Models'
+import { IMessage, LeftRightStyle, Reply, User } from './Models'
 import { QuickRepliesProps } from './QuickReplies'
 import { Send, SendProps } from './Send'
 import { SystemMessage, SystemMessageProps } from './SystemMessage'
 import { Time, TimeProps } from './Time'
 import * as utils from './utils'
-
-dayjs.extend(localizedFormat)
 
 export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   /* Message container ref */
@@ -78,8 +58,6 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   disableComposer?: boolean
   /* User sending the messages: { _id, name, avatar } */
   user?: User
-  /*  Locale to localize the dates */
-  locale?: string
   /* Format to use for rendering times; default is 'LT' */
   timeFormat?: string
   /* Format to use for rendering dates; default is 'll' */
@@ -99,8 +77,6 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   inverted?: boolean
   /* Extra props to be passed to the <Image> component created by the default renderMessageImage */
   imageProps?: Message<TMessage>['props']
-  /*Extra props to be passed to the MessageImage's Lightbox */
-  lightboxProps?: LightboxProps
   /*Distance of the chat from the bottom of the screen (e.g. useful if you display a tab bar) */
   bottomOffset?: number
   /* Minimum height of the input toolbar; default is 44 */
@@ -125,8 +101,6 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   minComposerHeight?: number
   /* composer min Height */
   maxComposerHeight?: number
-  options?: { [key: string]: any }
-  optionTintColor?: string
   quickReplyStyle?: StyleProp<ViewStyle>
   quickReplyTextStyle?: StyleProp<TextStyle>
   quickReplyContainerStyle?: StyleProp<ViewStyle>
@@ -135,13 +109,6 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   /* infinite scroll up when reach the top of messages container, automatically call onLoadEarlier function if exist */
   infiniteScroll?: boolean
   timeTextStyle?: LeftRightStyle<TextStyle>
-  /* Custom action sheet */
-  actionSheet?(): {
-    showActionSheetWithOptions: (
-      options: ActionSheetOptions,
-      callback: (i: number) => void,
-    ) => void
-  }
   /* Callback when a message avatar is tapped */
   onPressAvatar?(user: User): void
   /* Callback when a message avatar is tapped */
@@ -173,12 +140,6 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   renderMessage?(message: Message<TMessage>['props']): React.ReactNode
   /* Custom message text */
   renderMessageText?(messageText: MessageTextProps<TMessage>): React.ReactNode
-  /* Custom message image */
-  renderMessageImage?(props: MessageImageProps<TMessage>): React.ReactNode
-  /* Custom message video */
-  renderMessageVideo?(props: MessageVideoProps<TMessage>): React.ReactNode
-  /* Custom message video */
-  renderMessageAudio?(props: MessageAudioProps<TMessage>): React.ReactNode
   /* Custom view inside the bubble */
   renderCustomView?(props: Bubble<TMessage>['props']): React.ReactNode
   /*Custom day above a message*/
@@ -195,8 +156,6 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
   renderInputToolbar?(props: InputToolbarProps<TMessage>): React.ReactNode
   /*  Custom text input message composer */
   renderComposer?(props: ComposerProps): React.ReactNode
-  /* Custom action button on the left of the message composer */
-  renderActions?(props: ActionsProps): React.ReactNode
   /* Custom send button; you can pass children to the original Send component quite easily, for example to use a custom icon (example) */
   renderSend?(props: SendProps<TMessage>): React.ReactNode
   /*Custom second line of actions below the message composer */
@@ -218,6 +177,8 @@ export interface GiftedChatProps<TMessage extends IMessage = IMessage> {
     props: Message<TMessage>['props'],
     nextProps: Message<TMessage>['props'],
   ): boolean
+  onPhonePress?(phone: string): void
+  onEmailPress?(email: string): void
 }
 
 export interface GiftedChatState<TMessage extends IMessage = IMessage> {
@@ -240,9 +201,7 @@ function GiftedChat<TMessage extends IMessage = IMessage>(
     messageIdGenerator = () => uuid.v4(),
     user = {},
     onSend = () => {},
-    locale = 'en',
     renderLoading = null,
-    actionSheet = null,
     textInputProps = {},
     renderChatFooter = null,
     renderInputToolbar = null,
@@ -270,7 +229,6 @@ function GiftedChat<TMessage extends IMessage = IMessage>(
   const bottomOffsetRef = useRef(0)
   const maxHeightRef = useRef<number | undefined>(undefined)
   const isFirstLayoutRef = useRef(true)
-  const actionSheetRef = useRef<ActionSheetProviderRef>(null)
 
   let _isTextInputWasFocused: boolean = false
 
@@ -674,26 +632,14 @@ function GiftedChat<TMessage extends IMessage = IMessage>(
     return null
   }
 
-  const contextValues = useMemo(
-    () => ({
-      actionSheet: actionSheet || (() => actionSheetRef.current?.getContext()!),
-      getLocale: () => locale,
-    }),
-    [actionSheet, locale],
-  )
-
   if (state.isInitialized === true) {
     return (
-      <GiftedChatContext.Provider value={contextValues}>
-        <View testID={TEST_ID.WRAPPER} style={styles.wrapper}>
-          <ActionSheetProvider ref={actionSheetRef}>
-            <View style={styles.container} onLayout={onMainViewLayout}>
-              {renderMessages()}
-              {_renderInputToolbar()}
-            </View>
-          </ActionSheetProvider>
+      <View testID={TEST_ID.WRAPPER} style={styles.wrapper}>
+        <View style={styles.container} onLayout={onMainViewLayout}>
+          {renderMessages()}
+          {_renderInputToolbar()}
         </View>
-      </GiftedChatContext.Provider>
+      </View>
     )
   }
 
@@ -810,11 +756,9 @@ const styles = StyleSheet.create({
 export * from './Models'
 export {
   GiftedChat,
-  Actions,
   Avatar,
   Bubble,
   SystemMessage,
-  MessageImage,
   MessageText,
   Composer,
   Day,

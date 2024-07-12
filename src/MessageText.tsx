@@ -14,7 +14,6 @@ import {
 import ParsedText from 'react-native-parsed-text'
 import { LeftRightStyle, IMessage } from './Models'
 import { StylePropType } from './utils'
-import { useChatContext } from './GiftedChatContext'
 import { error } from './logging'
 
 const WWW_URL_PATTERN = /^www\./i
@@ -55,11 +54,8 @@ const styles = {
   }),
 }
 
-const DEFAULT_OPTION_TITLES = ['Call', 'Text', 'Cancel']
-
 export interface MessageTextProps<TMessage extends IMessage> {
   position?: 'left' | 'right'
-  optionTitles?: string[]
   currentMessage?: TMessage
   containerStyle?: LeftRightStyle<ViewStyle>
   textStyle?: LeftRightStyle<TextStyle>
@@ -67,11 +63,12 @@ export interface MessageTextProps<TMessage extends IMessage> {
   textProps?: TextProps
   customTextStyle?: StyleProp<TextStyle>
   parsePatterns?(linkStyle: TextStyle): any
+  onPhonePress?(phone: string): void
+  onEmailPress?(email: string): void
 }
 
 export function MessageText<TMessage extends IMessage = IMessage>({
   currentMessage = {} as TMessage,
-  optionTitles = DEFAULT_OPTION_TITLES,
   position = 'left',
   containerStyle,
   textStyle,
@@ -79,9 +76,9 @@ export function MessageText<TMessage extends IMessage = IMessage>({
   customTextStyle,
   parsePatterns = () => [],
   textProps,
+  onEmailPress,
+  onPhonePress,
 }: MessageTextProps<TMessage>) {
-  const { actionSheet } = useChatContext()
-
   // TODO: React.memo
   // const shouldComponentUpdate = (nextProps: MessageTextProps<TMessage>) => {
   //   return (
@@ -102,41 +99,6 @@ export function MessageText<TMessage extends IMessage = IMessage>({
       })
     }
   }
-
-  const onPhonePress = (phone: string) => {
-    const options =
-      optionTitles && optionTitles.length > 0
-        ? optionTitles.slice(0, 3)
-        : DEFAULT_OPTION_TITLES
-    const cancelButtonIndex = options.length - 1
-    actionSheet().showActionSheetWithOptions(
-      {
-        options,
-        cancelButtonIndex,
-      },
-      (buttonIndex: number) => {
-        switch (buttonIndex) {
-          case 0:
-            Linking.openURL(`tel:${phone}`).catch(e => {
-              error(e, 'No handler for telephone')
-            })
-            break
-          case 1:
-            Linking.openURL(`sms:${phone}`).catch(e => {
-              error(e, 'No handler for text')
-            })
-            break
-          default:
-            break
-        }
-      },
-    )
-  }
-
-  const onEmailPress = (email: string) =>
-    Linking.openURL(`mailto:${email}`).catch(e =>
-      error(e, 'No handler for mailto'),
-    )
 
   const linkStyle = [
     styles[position].link,

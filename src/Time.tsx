@@ -1,13 +1,12 @@
 import * as React from 'react'
 import PropTypes from 'prop-types'
 import { StyleSheet, Text, View, ViewStyle, TextStyle } from 'react-native'
-import dayjs from 'dayjs'
 
 import Color from './Color'
 import { TIME_FORMAT } from './Constant'
 import { LeftRightStyle, IMessage } from './Models'
 import { StylePropType } from './utils'
-import { useChatContext } from './GiftedChatContext'
+import { format } from 'date-fns'
 
 const { containerStyle } = StyleSheet.create({
   containerStyle: {
@@ -16,6 +15,8 @@ const { containerStyle } = StyleSheet.create({
     marginBottom: 5,
   },
 })
+
+//@ts-ignore
 const { textStyle } = StyleSheet.create({
   textStyle: {
     fontSize: 10,
@@ -60,7 +61,6 @@ export function Time<TMessage extends IMessage = IMessage>({
   timeFormat = TIME_FORMAT,
   timeTextStyle,
 }: TimeProps<TMessage>) {
-  const { getLocale } = useChatContext()
   if (currentMessage == null) {
     return null
   }
@@ -74,11 +74,12 @@ export function Time<TMessage extends IMessage = IMessage>({
     >
       <Text
         style={[
+          //@ts-ignore
           styles[position].text,
           timeTextStyle && timeTextStyle[position],
         ]}
       >
-        {dayjs(currentMessage.createdAt).locale(getLocale()).format(timeFormat)}
+        {format(currentMessage.createdAt, timeFormat)}
       </Text>
     </View>
   )

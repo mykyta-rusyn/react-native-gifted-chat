@@ -50,6 +50,8 @@ export interface MessageProps<TMessage extends IMessage> {
     nextProps: MessageProps<IMessage>,
   ): boolean
   onMessageLayout?(event: LayoutChangeEvent): void
+  onPhonePress?(phone: string): void
+  onEmailPress?(email: string): void
 }
 
 export default class Message<
@@ -110,9 +112,6 @@ export default class Message<
       next.pending !== current.pending ||
       next.createdAt !== current.createdAt ||
       next.text !== current.text ||
-      next.image !== current.image ||
-      next.video !== current.video ||
-      next.audio !== current.audio ||
       previousMessage !== nextPropsPreviousMessage ||
       nextMessage !== nextPropsMessage ||
       shouldUpdate
