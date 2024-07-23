@@ -340,12 +340,8 @@ export default class MessageContainer<
           renderItem={this.renderRow}
           {...this.props.invertibleScrollViewProps}
           ListEmptyComponent={this.renderChatEmpty}
-          ListFooterComponent={
-            inverted ? this.renderHeaderWrapper : undefined
-          }
-          ListHeaderComponent={
-            inverted ? undefined : this.renderHeaderWrapper
-          }
+          ListFooterComponent={inverted ? this.renderHeaderWrapper : undefined}
+          ListHeaderComponent={inverted ? undefined : this.renderHeaderWrapper}
           onScroll={this.handleOnScroll}
           scrollEventThrottle={100}
           onLayout={this.onLayoutList}
